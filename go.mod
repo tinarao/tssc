@@ -14,6 +14,7 @@ require (
 	github.com/eycorsican/go-tun2socks v1.16.11 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/shadowsocks/go-shadowsocks2 v0.1.5 // indirect
+	github.com/urfave/cli/v3 v3.4.1 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
 	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/net v0.36.0 // indirect

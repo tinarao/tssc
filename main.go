@@ -1,19 +1,22 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
-	"tssc/internal/dns"
-	"tssc/internal/ipv6"
-	"tssc/internal/outline_device"
-	"tssc/internal/routing"
-	tundevice "tssc/internal/tun_device"
+	"time"
+	"tssc/internal/appdata"
+	"tssc/internal/proxy/dns"
+	"tssc/internal/proxy/ipv6"
+	"tssc/internal/proxy/outline_device"
+	"tssc/internal/proxy/routing"
+	tundevice "tssc/internal/proxy/tun_device"
 
+	"github.com/urfave/cli/v3"
 	"golang.org/x/sys/unix"
 )
 
@@ -23,7 +26,6 @@ type App struct {
 }
 
 func (app App) Run() error {
-	// this WaitGroup must Wait() after tun is closed
 	trafficCopyWg := &sync.WaitGroup{}
 	defer trafficCopyWg.Wait()
 
@@ -33,7 +35,6 @@ func (app App) Run() error {
 	}
 	defer tun.Close()
 
-	// disable IPv6 before resolving Shadowsocks server IP
 	prevIPv6, err := ipv6.SetEnabled(false)
 	if err != nil {
 		return fmt.Errorf("failed to disable IPv6: %w", err)
@@ -79,35 +80,49 @@ func (app App) Run() error {
 	return nil
 }
 
+// func _main() {
+// app := App{
+// 	TransportConfig: flag.String("transport", "", "Transport config"),
+// 	RoutingConfig: &routing.Config{
+// 		TunDeviceName:        "outline233",
+// 		TunDeviceIP:          "10.233.233.1",
+// 		TunDeviceMTU:         1500, // todo: read this from netlink
+// 		TunGatewayCIDR:       "10.233.233.2/32",
+// 		RoutingTableID:       233,
+// 		RoutingTablePriority: 23333,
+// 		DNSServerIP:          "9.9.9.9",
+// 	},
+// }
+//
+// flag.Parse()
+//
+// if err := app.Run(); err != nil {
+// 	log.Printf("%v\n", err)
+// }
+// }
+
 func main() {
+	start := time.Now()
+	defer func() {
+		fmt.Println(time.Since(start))
+	}()
 
-	app := App{
-		TransportConfig: flag.String("transport", "", "Transport config"),
-		RoutingConfig: &routing.Config{
-			TunDeviceName:        "outline233",
-			TunDeviceIP:          "10.233.233.1",
-			TunDeviceMTU:         1500, // todo: read this from netlink
-			TunGatewayCIDR:       "10.233.233.2/32",
-			RoutingTableID:       233,
-			RoutingTablePriority: 23333,
-			DNSServerIP:          "9.9.9.9",
-		},
+	appdata.Load()
+	fmt.Printf("%+v\n", appdata.AppData)
+
+	cmd := &cli.Command{
+		Name:  "tssc",
+		Usage: "handle ss:// config urls",
+		Commands: []*cli.Command{{
+			Name:    "connect",
+			Aliases: []string{"c"},
+			Action: func(ctx context.Context, cmd *cli.Command) error {
+				alias := cmd.Args().First()
+				fmt.Println(alias)
+				return nil
+			},
+		}},
 	}
-	flag.Parse()
 
-	if err := app.Run(); err != nil {
-		log.Printf("%v\n", err)
-	}
-
-	// u := "penis"
-	//
-	// device, err := outline_device.New(u)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
-	//
-	// defer device.Close()
-	// ss.Refresh()
-
-	// conf := ResolveShadowsocksServerIPFromConfig
+	cmd.Run(context.Background(), os.Args)
 }
