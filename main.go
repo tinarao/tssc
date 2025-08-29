@@ -88,17 +88,39 @@ func main() {
 		Usage: "handle ss:// config urls",
 		Commands: []*cli.Command{
 			{
-				Name:    "connect",
-				Aliases: []string{"c"},
+				Name:      "connect",
+				Aliases:   []string{"c"},
+				Usage:     "Establish connection",
+				ArgsUsage: "<alias>",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Println("wip")
+					alias := cmd.Args().First()
+					url := appdata.AppData.Urls[alias]
+
+					app := &App{
+						TransportConfig: &url,
+						RoutingConfig: &routing.Config{
+							TunDeviceName:        "outline233",
+							TunDeviceIP:          "10.233.233.1",
+							TunDeviceMTU:         1500, // todo: read this from netlink
+							TunGatewayCIDR:       "10.233.233.2/32",
+							RoutingTableID:       233,
+							RoutingTablePriority: 23333,
+							DNSServerIP:          "9.9.9.9",
+						},
+					}
+
+					if err := app.Run(); err != nil {
+						fmt.Println(err.Error())
+						os.Exit(1)
+					}
+
 					return nil
 				},
 			},
 			{
-				Name:        "list",
-				Aliases:     []string{"l"},
-				Description: "list all saved urls",
+				Name:    "list",
+				Aliases: []string{"l"},
+				Usage:   "List all saved urls",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					for k, v := range appdata.AppData.Urls {
 						fmt.Printf("%s :: %s\n", k, v)
@@ -107,8 +129,10 @@ func main() {
 				},
 			},
 			{
-				Name:    "add",
-				Aliases: []string{"a"},
+				Name:      "add",
+				Aliases:   []string{"a"},
+				Usage:     "Add url",
+				ArgsUsage: "<alias> <ss://url>",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					if cmd.Args().Len() != 2 {
 						fmt.Println("incorrect format")
