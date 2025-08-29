@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"time"
 	"tssc/internal/appdata"
 	"tssc/internal/proxy/dns"
 	"tssc/internal/proxy/ipv6"
@@ -80,48 +79,51 @@ func (app App) Run() error {
 	return nil
 }
 
-// func _main() {
-// app := App{
-// 	TransportConfig: flag.String("transport", "", "Transport config"),
-// 	RoutingConfig: &routing.Config{
-// 		TunDeviceName:        "outline233",
-// 		TunDeviceIP:          "10.233.233.1",
-// 		TunDeviceMTU:         1500, // todo: read this from netlink
-// 		TunGatewayCIDR:       "10.233.233.2/32",
-// 		RoutingTableID:       233,
-// 		RoutingTablePriority: 23333,
-// 		DNSServerIP:          "9.9.9.9",
-// 	},
-// }
-//
-// flag.Parse()
-//
-// if err := app.Run(); err != nil {
-// 	log.Printf("%v\n", err)
-// }
-// }
-
 func main() {
-	start := time.Now()
-	defer func() {
-		fmt.Println(time.Since(start))
-	}()
-
 	appdata.Load()
-	fmt.Printf("%+v\n", appdata.AppData)
+	defer appdata.Save(appdata.AppData)
 
 	cmd := &cli.Command{
 		Name:  "tssc",
 		Usage: "handle ss:// config urls",
-		Commands: []*cli.Command{{
-			Name:    "connect",
-			Aliases: []string{"c"},
-			Action: func(ctx context.Context, cmd *cli.Command) error {
-				alias := cmd.Args().First()
-				fmt.Println(alias)
-				return nil
+		Commands: []*cli.Command{
+			{
+				Name:    "connect",
+				Aliases: []string{"c"},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					fmt.Println("wip")
+					return nil
+				},
 			},
-		}},
+			{
+				Name:        "list",
+				Aliases:     []string{"l"},
+				Description: "list all saved urls",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					for k, v := range appdata.AppData.Urls {
+						fmt.Printf("%s :: %s\n", k, v)
+					}
+					return nil
+				},
+			},
+			{
+				Name:    "add",
+				Aliases: []string{"a"},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					if cmd.Args().Len() != 2 {
+						fmt.Println("incorrect format")
+						os.Exit(1)
+					}
+
+					alias := cmd.Args().Get(0)
+					url := cmd.Args().Get(1)
+
+					appdata.AppData.Urls[alias] = url
+
+					return nil
+				},
+			},
+		},
 	}
 
 	cmd.Run(context.Background(), os.Args)

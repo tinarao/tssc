@@ -38,12 +38,10 @@ func Save(data *Appdata) {
 	}
 
 	path := getAppdataFilePath()
-	if err := os.WriteFile(path, raw, 0644); err != nil {
+	if err := os.WriteFile(path, raw, 0700); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-
-	fmt.Println("Successfuly updated appdata")
 }
 
 func ensureReadFile(path string) (contents []byte) {
