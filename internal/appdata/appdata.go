@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-const APPDATA_PATH = "/.local/share/tssc"
+const APPDATA_PATH = "/etc/tssc"
 const APPDATA_FILE_NAME = "data.json"
 
 type Appdata struct {
@@ -64,9 +64,7 @@ func createAppdataFileOrPanic() {
 
 	if _, err := os.Stat(filePath); err != nil {
 		if os.IsNotExist(err) {
-			homedir := getHomedirOrPanic()
-			appdataPath := filepath.Join(homedir, APPDATA_PATH)
-			err := os.MkdirAll(appdataPath, 0700)
+			err := os.MkdirAll(APPDATA_PATH, 0700)
 			if err != nil {
 				fmt.Println(err.Error())
 				os.Exit(1)
@@ -96,19 +94,5 @@ func createAppdataFileOrPanic() {
 }
 
 func getAppdataFilePath() string {
-	homedir := getHomedirOrPanic()
-	path := filepath.Join(homedir, APPDATA_PATH)
-	appdataFilePath := filepath.Join(path, APPDATA_FILE_NAME)
-
-	return appdataFilePath
-}
-
-func getHomedirOrPanic() string {
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-
-	return homedir
+	return filepath.Join(APPDATA_PATH, APPDATA_FILE_NAME)
 }

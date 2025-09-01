@@ -14,6 +14,7 @@ import (
 	"tssc/internal/proxy/outline_device"
 	"tssc/internal/proxy/routing"
 	tundevice "tssc/internal/proxy/tun_device"
+	"tssc/internal/status"
 
 	"github.com/urfave/cli/v3"
 	"golang.org/x/sys/unix"
@@ -96,6 +97,14 @@ func main() {
 					alias := cmd.Args().First()
 					url := appdata.AppData.Urls[alias]
 
+					if err := status.Lock(alias); err != nil {
+						fmt.Println(err.Error())
+						os.Exit(1)
+					}
+					defer status.Unlock()
+
+					fmt.Println(url)
+
 					app := &App{
 						TransportConfig: &url,
 						RoutingConfig: &routing.Config{
@@ -114,6 +123,15 @@ func main() {
 						os.Exit(1)
 					}
 
+					return nil
+				},
+			},
+			{
+				Name:    "status",
+				Aliases: []string{"s"},
+				Usage:   "get current connection status",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					fmt.Printf("%+v\n", status.IsLocked())
 					return nil
 				},
 			},
